@@ -1,0 +1,23 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Publish</title>
+</head>
+<body>
+    <form method="GET" action='/publishDiscussion'>
+        User Pseudo:<input type="text" name="user_id">
+        Title:<input type="text" name="title">
+        Text:<input type="text" name="text">
+        <button type="submit">Publish Root</button>
+    </form>
+    <form method="GET" action='/publishComment'>
+        User Pseudo:<input type="text" name="user_id">
+        Text:<input type="text" name="text">
+        Discussion ID:<input type="text" name="discussion_id">
+        <button type="submit">Publish Comment</button>
+    </form>
+</body>
+</html>
