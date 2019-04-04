@@ -16,6 +16,9 @@ It uses the LSA/LSI algorithm, meaning it uses the U matrix of the SVD decomposi
 ### General Library Dependencies
 
 [express](https://www.npmjs.com/package/express) : For routing.
+
 [http](https://www.npmjs.com/package/http) : I honestly forget why I use this.
+
 [mysql](https://www.npmjs.com/search?q=mysql) : To perform asynchronous sql queries.
+
 [body-parser](https://www.npmjs.com/package/body-parser) : To easily get request parameters.
