@@ -22,13 +22,10 @@ function Unique_Words(text) {
     allwords = Words(text);
     for (word in allwords) {
         if (unique_words.includes(allwords[word])) {
-            console.log(allwords[word] + " already exists in map");
-        }
+            console.log(allwords[word] + " already exists in map");}
         else {
             console.log(allwords[word] + " does not exist, adding");
-            unique_words.push(allwords[word]);
-        }
-    }
+            unique_words.push(allwords[word]); }}
     console.log(unique_words);
     return unique_words;}
 
@@ -39,14 +36,20 @@ function Unique_Words_Occurances(text) {
         if (unique_words_occurances.has(word)) {
             console.log(allwords[word] + " already exists in map");
             var occurances_current = unique_words.get(word);
-            unique_words_occurances.set(word, (occurances_current + 1));
-        }
-        else {
-            unique_words_occurances.set(word, 1);
-        }
-    }
+            unique_words_occurances.set(word, (occurances_current + 1));}
+        else {unique_words_occurances.set(word, 1);} }
     console.log(unique_words_occurances);
     return unique_words_occurances;}
+
+function makeSavepointName(length) {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (var i = 0; i < length; i++) {text += possible.charAt(Math.floor(Math.random() * possible.length));}
+    return text;}
+
+function HandleError(error, savepoint_name) {
+    if (error)  {con_sync.query("ROLLBACK TO " + savepoint_name)}
+    else        {con_sync.query("COMMIT");}}
 //
 
 const app = express();
@@ -73,16 +76,19 @@ var con_sync = new mysql_sync({
 
 app.get('/text', function (req, res) {res.sendFile(__dirname + '/publish.html');})
 
-//cannot use app.get or app.post as the following needs to:
-    //get data from req, do GET requests, do POST requests
+//cannot use app.get or app.post as the following needs to: get data from req, do GET requests, do POST requests
 app.all('/publishDiscussion', function (req, res) {
-    //get database snapshot
+    var savepoint_name = "publishDiscussion" + makeSavepointName(10);
+    con_sync.query("SAVEPOINT " + savepoint_name);      //set database savepoint
+    var error = false;
+
+    //data
     var userPseudo  = req.query.user_id;
     var title       = req.query.title;
     var text = req.query.text;
     var unique_words_with_occurances = Unique_Words_Occurances(text);
     
-    //Insert comment
+    //Insert discussion
     con.query('INSERT INTO `Discussion`(user_id,titre,texte) values(?,?,?)', [req.query.user_id, req.query.title, req.query.root], function (error, results, fields) {
         if (errorCP) {
             console.log("Error: " + errorCP.message);
@@ -98,15 +104,17 @@ app.all('/publishDiscussion', function (req, res) {
                         //undo everything in database snapshot
                 }
             }
-
         }
     });
+
+    //Handle error by either rolling back to savepoint or commiting savepoint
+    HandleError(error, savepoint_name);
 });
 
 app.all('/publishComment', function (req, res) {
-    //insert words into Mot
-    //insert word links into Mot-Discussion (with occurances, add and update occurances if exists, poid_svd = 0)
-    //perform semantic analysis (with Jama)
+    var savepoint_name = "publishDiscussion" + makeSavepointName(10);
+    con_sync.query("SAVEPOINT " + savepoint_name);      //set database savepoint
+    var error = false;
 
 ///Get comment attributes and insert them
     var user_id = req.query.pseudo;                                             //get user id
@@ -114,14 +122,9 @@ app.all('/publishComment', function (req, res) {
     var comment_text = req.query.text;                                          //get text
     var unique_words = Unique_Words(comment_text);                              //get unique words
     var unique_words_with_occurances = Unique_Words_Occurances(comment_text);   //get unique words and their occurances
-    
-    var current_timestamp = Number(con_sync.query("SELECT CURRENT_TIMESTAMP AS 'Current timestamp'"));              //timestamp to delete all inserts if one fails
-    try {
-        con_sync.query('INSERT INTO Commentaire(user_id, text, discussion_id) VALUES(?,?,?)', [user_id, comment_text, discussion_id]);   //insert comment
-    }
-    catch (except) {
-        console.log("Unexpected error!  " + except + " " + except.message)
-    }
+
+    try {con_sync.query('INSERT INTO Commentaire(user_id, text, discussion_id) VALUES(?,?,?)', [user_id, comment_text, discussion_id]);}
+    catch (except) {console.log("Unexpected error!  " + except + " " + except.message)}
     
 ///Insert words into Mot
     for (word in unique_words) {
@@ -133,39 +136,14 @@ app.all('/publishComment', function (req, res) {
             else {console.log("Unexpected error!    " + except + " " + except.message)      }}}
 
 ///Insert word links into Mot-Discussion, with occurances
-    for (word in unique_words) {
-        try {
-            //get number id of word
-            var word_id = Number(con_sync.query('SELECT mot_id FROM Mot where mot=?', word)); //get id of word
-
-            //insert word-discussion relation
-            con_sync.query('INSERT INTO `Mot-Discussion`(id_discussion, mot_id, occurances, poid_svd) VALUES(?,?,?,?)', [discussion_id, word_id, occurances, 0]);
-        }
-        catch (e) {
-            if (e.message = "ERR_DUP_ENTRY") {  //if the relation already exists
-                console.log("This link between word and discussion exists already, updating value and continuing");
-                try {
-                    var occurances_existing = Number(con_sync.query('SELECT occurances FROM `Mot-Discussion` WHERE', []));  //get currently saved occurances
-                    var new_occurances = occurances_existing + unique_words_with_occurances;
-
-                    con_sync.query('UPDATE `Mot-Discussion` SET occurances=? WHERE id_discussion=?, mot_id=?', [new_occurances, discussion_id, word_id]);   //update occurances
-                }
-                catch (e) {
-
-                }
-            }
-        }
-    }
-//V2 for inserting word links
     var query = "BEGIN TRAN; INSERT INTO `Mot-Discussion` (id_discussion, mot_id, occurances, poid_svd) VALUES "
     for (word in unique_words) {    //add elements to query
         var word_id = Number(con_sync.query('SELECT mot_id FROM Mot where mot=?', word)); //get id of word
         query += "('" + Number(discussion_id) + "', '" + Number(word_id) + "', '" + Number(occurances) + "', '0'),";    //insert word-discussion relation
     }
     query += " ON DUPLICATE KEY UPDATE occurances = occurances + VALUES(occurances); END TRAN;"   //if entry exists, add occurances
-    try {
-        con_sync.query(query);
-    } catch (e) {console.log("Error inserting into `Mot-Discussion` !")}
+    try {con_sync.query(query);}
+    catch (e) {console.log("Error inserting into `Mot-Discussion` !");}
     
 ///Semantic Analysis
     var number_of_words = Number(con_sync.query('SELECT COUNT(*) FROM Mot'));                   //get number of words
@@ -195,8 +173,7 @@ app.all('/publishComment', function (req, res) {
     }
 
 ///Handle error with some inserts by deleting EVERY recent insert
-
-
+    HandleError(error, savepoint_name);
 });
 
 app.all('/searchDiscussion', function (req, res) {
@@ -206,7 +183,7 @@ app.all('/searchDiscussion', function (req, res) {
     for (var tag in tags) {
         //NEED TO REDO QUERY NEED JOINS n shit
         var discussion = con_sync.query('SELECT discussion_id, poid_svd FROM Discussion,`Mot-Discussion`,Mot WHERE mot=? ORDER BY poid_svd desc LIMIT 30', tag);
-        total_similarity_matrix.set()
+        total_similarity_matrix.set();
     }
 
     var discussion_highest_relation = new Array(number_of_discussions);    //stores the sum of the svd weights for supplied tags for each discussion
