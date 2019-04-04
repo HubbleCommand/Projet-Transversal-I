@@ -13,6 +13,7 @@ It uses the LSA/LSI algorithm, meaning it uses the U matrix of the SVD decomposi
 [Jama](https://www.npmjs.com/package/jama): A math library for Matrices. It does all the heavy lifting
 
 **General Library Dependencies**
+
 [express](https://www.npmjs.com/package/express) : For routing.
 [http](https://www.npmjs.com/package/http) : I honestly forget why I use this.
 [mysql](https://www.npmjs.com/search?q=mysql) : To perform asynchronous sql queries.
