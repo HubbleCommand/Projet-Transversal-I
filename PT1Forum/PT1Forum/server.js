@@ -156,7 +156,17 @@ app.all('/publishComment', function (req, res) {
             }
         }
     }
-
+//V2 for inserting word links
+    var query = "BEGIN TRAN; INSERT INTO `Mot-Discussion` (id_discussion, mot_id, occurances, poid_svd) VALUES "
+    for (word in unique_words) {    //add elements to query
+        var word_id = Number(con_sync.query('SELECT mot_id FROM Mot where mot=?', word)); //get id of word
+        query += "('" + Number(discussion_id) + "', '" + Number(word_id) + "', '" + Number(occurances) + "', '0'),";    //insert word-discussion relation
+    }
+    query += " ON DUPLICATE KEY UPDATE occurances = occurances + VALUES(occurances); END TRAN;"   //if entry exists, add occurances
+    try {
+        con_sync.query(query);
+    } catch (e) {console.log("Error inserting into `Mot-Discussion` !")}
+    
 ///Semantic Analysis
     var number_of_words = Number(con_sync.query('SELECT COUNT(*) FROM Mot'));                   //get number of words
     var counter_word = 0;   
@@ -196,7 +206,7 @@ app.all('/searchDiscussion', function (req, res) {
     for (var tag in tags) {
         //NEED TO REDO QUERY NEED JOINS n shit
         var discussion = con_sync.query('SELECT discussion_id, poid_svd FROM Discussion,`Mot-Discussion`,Mot WHERE mot=? ORDER BY poid_svd desc LIMIT 30', tag);
-        total
+        total_similarity_matrix.set()
     }
 
     var discussion_highest_relation = new Array(number_of_discussions);    //stores the sum of the svd weights for supplied tags for each discussion
@@ -214,9 +224,7 @@ app.listen(port, function () {
 
     var array = new Array(10).fill(0);
     for (var i = 0; i < 10; i++) {
-        console.log(array[i]);
-    }
-    
+        console.log(array[i]);}
 
     var a = [[1, 2, 3],[3, 2, 1]];
 
