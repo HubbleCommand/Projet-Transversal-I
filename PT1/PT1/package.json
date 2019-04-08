@@ -1,17 +1,18 @@
 {
-  "name": "pt1-forum",
+  "name": "pt1",
   "version": "0.0.0",
-  "description": "PT1Forum",
-  "main": "server.js",
+  "description": "PT1",
+  "main": "app.js",
   "author": {
     "name": ""
   },
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
+    "http": "0.0.0",
     "jama": "^1.0.4",
     "mysql": "^2.16.0",
-    "react": "^16.8.5",
+    "react": "^16.8.6",
     "sync-mysql": "^3.0.1"
   }
 }
