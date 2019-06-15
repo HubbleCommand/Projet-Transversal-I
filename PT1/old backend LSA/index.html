@@ -1,0 +1,54 @@
+<html>
+<head>
+    <title>Person Finder</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <form method="GET" action="/person">
+        <input type="text" name="id">
+        <button type="submit">Get Person</button>
+    </form>
+
+    <form action="/addPerson" method="POST">
+        First name:<input type="text" name="name"><br>
+        Last name:<input type="text" name="lastName"><br>
+        Age:<input type="number" name="age"><br>
+        <button type="submit">Add Person</button>
+    </form>
+    <form action="/deletePersonByID" method="DELETE">
+        ID:<input type="number" name="id">
+        <button type="submit">Delete Person</button>
+    </form>
+    
+
+    <div id="root"></div>
+
+    <button type="submit" onclick="UserAction()">Search</button>
+    <button id="person" type="submit" ">Search2</button>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#person").click(function () {
+                $.get('http://localhost:3000/allPersons',
+                    function (data, status) {
+                        alert("Data: " + data + "\nStatus: " + status);
+                    }
+                );
+            });
+        });
+        function UserAction() {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById("root").innerHTML =
+                        this.responseText;
+                }
+            };
+            xhr.open("GET", "http://localhost:3000/allPersons", true);
+            xhr.send();
+        }
+    </script>
+</body>
+</html>
+</body>
+</html>

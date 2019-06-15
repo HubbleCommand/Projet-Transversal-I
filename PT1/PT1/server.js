@@ -69,10 +69,7 @@ app.use(bodyParser.urlencoded({ extend: true }));
 var port = 3000;
 
 let con = mysql.createConnection({
-    host: "10.194.69.15",
-    user: "A8",
-    password: "KoXeOJz0KiV4lXit",
-    database: "A8"
+    
 });
 
 con.connect(function (err) {
@@ -81,10 +78,7 @@ con.connect(function (err) {
 });
 
 var con_sync = new mysql_sync({
-    host: "10.194.69.15",
-    user: "A8",
-    password: "KoXeOJz0KiV4lXit",
-    database: "A8"
+    
 });
 
 app.get('/text', function (req, res) { res.sendFile(__dirname + '/publish.html'); })
